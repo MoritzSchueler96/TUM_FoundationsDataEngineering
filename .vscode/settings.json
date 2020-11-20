@@ -1,4 +1,0 @@
-{
-    "cmake.sourceDirectory": "${workspaceFolder}/projects/p01/fde20-bonusproject-1",
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
-}
