@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
   int handle = open(argv[1], O_RDONLY);
   lseek(handle, 0, SEEK_END);
   auto length = lseek(handle, 0, SEEK_CUR);
-  void *data = mmap(nullptr, length, PROT_READ, MAP_SHARED, handle, 0);
+  void *data = mmap(nullptr, length, PROT_READ, MAP_SHARED | MAP_POPULATE, handle, 0);
   auto begin = static_cast<const char *>(data), end = begin + length;
 
   unsigned sum = 0;

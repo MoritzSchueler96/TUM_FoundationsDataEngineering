@@ -1,11 +1,15 @@
-#include <immintrin.h>
 #include <charconv>
 #include <fcntl.h>
+#include <fstream>
+#include <immintrin.h>
 #include <iostream>
 #include <string>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <thread>
 #include <unistd.h>
+#include <vector>
+#include <mutex>
 
 using namespace std;
 
@@ -15,9 +19,9 @@ static const char *findPattern(const char *iter, const char *end)
 // found
 {
   // Loop over the content in blocks of 32 characters
-  auto end32 = end - 32;
+  auto end8 = end - 32;
   const auto pattern = _mm256_set1_epi8(separator);
-  for (; iter < end32; iter += 32)
+  for (; iter < end8; iter += 32)
   {
     // Check the next 32 characters for the pattern
     auto block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(iter));
@@ -40,9 +44,9 @@ static const char *findNthPattern(const char *iter, const char *end, unsigned n)
 // found
 {
   // Loop over the content in blocks of 32 characters
-  auto end32 = end - 32;
+  auto end8 = end - 32;
   const auto pattern = _mm256_set1_epi8(separator);
-  for (; iter < end32; iter += 32)
+  for (; iter < end8; iter += 32)
   {
     // Check the next 32 characters for the pattern
     auto block = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(iter));
@@ -69,18 +73,8 @@ static const char *findNthPattern(const char *iter, const char *end, unsigned n)
   return end;
 }
 
-int main(int argc, char *argv[])
+static unsigned computeSum(const char *begin, const char *end)
 {
-  if (argc != 2)
-    return 1;
-
-  int handle = open(argv[1], O_RDONLY);
-  lseek(handle, 0, SEEK_END);
-  auto length = lseek(handle, 0, SEEK_CUR);
-  void *data = mmap(nullptr, length, PROT_READ, MAP_SHARED | MAP_POPULATE, handle, 0);
-
-  auto begin = static_cast<const char *>(data), end = begin + length;
-
   unsigned sum = 0;
   for (auto iter = begin; iter < end;)
   {
@@ -98,6 +92,58 @@ int main(int argc, char *argv[])
     sum += v;
     iter = findPattern<'\n'>(iter, end);
   }
+  return sum;
+}
+
+static const char *findBoundary(const char *begin, const char *end,
+                                unsigned chunkCount, unsigned index)
+{
+  if (index == 0)
+    return begin;
+  if (index == chunkCount)
+    return end;
+
+  const char *b = begin + ((end - begin) * index / chunkCount);
+  return findPattern<'\n'>(b, end);
+}
+
+int main(int argc, char *argv[])
+{
+  if (argc != 2)
+    return 1;
+
+  int handle = open(argv[1], O_RDONLY);
+  lseek(handle, 0, SEEK_END);
+  auto length = lseek(handle, 0, SEEK_CUR);
+  void *data = mmap(nullptr, length, PROT_READ, MAP_SHARED, handle, 0);
+  madvise(data, length, MADV_SEQUENTIAL);
+  madvise(data, length, MADV_WILLNEED);
+  auto begin = static_cast<const char *>(data), end = begin + length;
+
+  // atomic<unsigned> sum = 0;
+  mutex m;
+  unsigned sum = 0;
+  vector<thread> threads;
+
+  for (unsigned index = 0, threadCount = thread::hardware_concurrency();
+       index != threadCount; ++index)
+  {
+    threads.push_back(thread([index, threadCount, begin, end, &sum, &m]() {
+      // Executed on a background thread
+      auto from = findBoundary(begin, end, threadCount, index);
+      auto to = findBoundary(begin, end, threadCount, index + 1);
+      unsigned localSum = computeSum(from, to);
+      // only one can update
+      {
+        unique_lock<mutex> lock(m);
+        sum += localSum;
+      }
+    }));
+  }
+
+  for (auto &t : threads)
+    t.join();
+
   cout << sum << endl;
 
   munmap(data, length);
