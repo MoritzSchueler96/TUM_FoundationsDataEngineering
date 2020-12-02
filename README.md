@@ -34,7 +34,8 @@ pref report -> show performance -> Enter -> Annotate main -> get assembler code 
 
 g++ -O0 -g <program.cpp> -> unoptimized, good for debugging
 g++ -O3 -g <program.cpp> -> optimized
-g++ -O3 -march=native -g <programm.cpp> -> compile for local machine, if time is spent outside of main for no reason
+g++ -O3 -g -march=native <programm.cpp> -> compile for local machine, if time is spent outside of main for no reason
+g++ -O3 -g -march=native -pthread <programm.cpp> -> enable threads
 
 TODO: setup cmake
 
