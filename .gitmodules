@@ -4,3 +4,6 @@
 [submodule "projects/p01/fde20-bonusproject-1"]
 	path = projects/p01/fde20-bonusproject-1
 	url = ssh://git@gitlab.db.in.tum.de:2222/Moritz/fde20-bonusproject-1.git
+[submodule "projects/p02/fde20-bonusproject-2"]
+	path = projects/p02/fde20-bonusproject-2
+	url = ssh://git@gitlab.db.in.tum.de:2222/Moritz/fde20-bonusproject-2.git
