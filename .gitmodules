@@ -1,0 +1,12 @@
+[submodule "projects/p01/TUM_FDE_Bonusproject1"]
+	path = projects/p01/TUM_FDE_Bonusproject1
+	url = git@github.com:MoritzSchueler96/TUM_FDE_Bonusproject1.git
+[submodule "projects/p02/TUM_FDE_Bonusproject2"]
+	path = projects/p02/TUM_FDE_Bonusproject2
+	url = git@github.com:MoritzSchueler96/TUM_FDE_Bonusproject2.git
+[submodule "projects/p03/TUM_FDE_Bonusproject3"]
+	path = projects/p03/TUM_FDE_Bonusproject3
+	url = git@github.com:MoritzSchueler96/TUM_FDE_Bonusproject3.git
+[submodule "exercises/ex02/TUM_FDE_TpchJoin"]
+	path = exercises/ex02/TUM_FDE_TpchJoin
+	url = git@github.com:MoritzSchueler96/TUM_FDE_TpchJoin.git
